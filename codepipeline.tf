@@ -3,12 +3,10 @@ resource aws_iam_role codepipeline_role {
   path = "/service/"
 
   assume_role_policy = jsonencode({
-    Version = "2012-10-17"
     Statement = [
       {
         Action = "sts:AssumeRole"
         Effect = "Allow"
-        Sid    = ""
         Principal = {
           Service = "codepipeline.amazonaws.com"
         }
@@ -84,16 +82,13 @@ data "aws_iam_policy_document" "deployment_pipeline_role_policy" {
   statement {
     // statementId: optional; describing all actions inside of this statement
     // must be unique b/w all statement blocks w/in same policy
-    sid = "s3 permissions"
+    sid = "s3permissions"
 
     // allowing these actions => based on effect
     // <resourceType>:<action>
     actions = [
-      "s3:GetObject",
-      "s3:GetObjectVersion",
-      "s3:GetBucketVersioning",
-      "s3:PutObjectAcl",
-      "s3:PutObject"
+      "codestar-connections:UseConnection",
+      "s3:*"
     ]
 
     // defaults to Allow
@@ -102,7 +97,7 @@ data "aws_iam_policy_document" "deployment_pipeline_role_policy" {
     // specifies what this set of actions applies to which ARN
     // ["*"] targets all ARNs
     resources = [
-      aws_s3_bucket.codepipeline_bucket.arn
+      "*"
     ]
   }
 }
@@ -117,4 +112,9 @@ resource "aws_iam_policy" "codepipeline_s3_policy" {
 resource "aws_iam_role_policy_attachment" "test-attach" {
   role       = aws_iam_role.codepipeline_role.name
   policy_arn = aws_iam_policy.codepipeline_s3_policy.arn
+}
+
+resource "aws_codestarconnections_connection" "github_connection" {
+  name          = "github_connection"
+  provider_type = "GitHub"
 }
